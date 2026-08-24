@@ -1,0 +1,26 @@
+# Exact environment the reported results were produced with.
+#
+#   conda env create -f environment.yml
+#   conda activate osr-tinyimagenet
+#   pip install -e .
+#
+# The `pip install -e .` step is what makes Datasets, Modelos, Utils, methods
+# and the vendored pytorch_ood importable. It is not optional.
+name: osr-tinyimagenet
+# Every dependency is installed with pip: the PyPI torch wheels already bundle
+# CUDA on Linux, so no conda channel beyond defaults is needed.
+channels:
+  - defaults
+dependencies:
+  - python=3.10.19
+  - pip
+  - pip:
+      - torch==2.9.1
+      - torchvision==0.24.1
+      - numpy==2.2.6
+      - pandas==2.3.3
+      - scikit-learn==1.7.2
+      - scipy==1.15.3
+      - matplotlib==3.10.8
+      - torchmetrics==1.8.2
+      - tqdm==4.67.1

@@ -1,0 +1,36 @@
+third_party/pytorch_ood
+=======================
+
+Vendored copy of pytorch-ood 0.2.2
+    https://github.com/kkirchheim/pytorch-ood
+    Copyright Konstantin Kirchheim
+    Licensed under the Apache License, Version 2.0 (see pytorch_ood/LICENSE).
+
+Why it is vendored rather than installed from PyPI
+--------------------------------------------------
+The OpenMax detector used by this benchmark carries a local change: its
+constructor takes an extra `epsilon` argument
+(`detector/openmax/torch.py`), which the evaluation loop reads back as
+`detector.epsilon` to threshold known/unknown decisions. Installing stock
+pytorch-ood from PyPI would not provide it.
+
+Vendoring also resolves an ambiguity that existed while the experiments were
+run: two copies of `pytorch_ood` were importable from the same environment,
+and which one won depended on sys.path order. Their `detector/openmax/`
+directories were verified byte-identical, so the reported OpenMax results are
+unaffected. This tree makes the resolution unambiguous.
+
+Known local change
+------------------
+- detector/openmax/torch.py: the `epsilon` constructor argument and the
+  `self.epsilon` attribute are not part of the upstream OpenMax API.
+
+This directory is the copy the reported results were produced with, and is
+what the benchmark imports. A full file-by-file diff against the upstream
+0.2.2 release has not been performed, so this tree — not PyPI — is
+authoritative for reproducing the OpenMax numbers.
+
+Files that were local additions rather than upstream code (plotting and
+metrics helpers under utils/, and dataset/img/CarregaImagens.py) have been
+removed, along with their imports in utils/__init__.py. Removing them was
+verified not to change the OpenMax results.

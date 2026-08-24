@@ -1,0 +1,2 @@
+from .Feature_extraction_abs import Feature_extraction_abs
+from .ResNet18_64x64_feature_extraction import ResNet18_64x64_feature_extraction

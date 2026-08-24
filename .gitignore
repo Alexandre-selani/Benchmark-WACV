@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Datasets and weights are not distributed with the repository — see README.
+data/
+checkpoints/
+features/
+results/
+
+# Environments
+.venv/
+venv/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
