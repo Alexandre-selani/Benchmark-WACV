@@ -1,8 +1,10 @@
 # INSERT TITLE
 
-Five open-set recognition methods — **CAC**, **GFROR**, **COSTARR**, **OpenMax**
-and **OpenGan** — evaluated on the same TinyImageNet splits, through the same
-data loader and the same metric implementation.
+Six open-set recognition methods — **CAC**, **GFROR**, **COSTARR**, **OpenMax**,
+**OpenGan** and **MSP** — evaluated on the same TinyImageNet splits, through the
+same data loader and the same metric implementation. MSP is the softmax-threshold
+baseline: it reuses the closed-set backbone unchanged and serves as the reference
+the other five are measured against.
 
 Each method ships with one runnable example that scores a single class split
 end to end.
@@ -124,6 +126,7 @@ python benchmark/costarr.py
 python benchmark/gfror.py
 python benchmark/opengan.py
 python benchmark/openmax.py
+python benchmark/msp.py
 ```
 
 Each writes, under `OSR_RESULTS`:
@@ -155,6 +158,7 @@ Default sweeps, matching the original experiments:
 | OpenGan | 0 to 1, step 0.01 | 100 |
 | GFROR | 0 to 30, step 0.2 | 150 |
 | OpenMax | tailsize x alpha x epsilon | 5x5x5 |
+| MSP | 0 to 1, step 0.01 | 100 |
 
 ## Running one method once
 
@@ -164,6 +168,7 @@ python examples/gfror_tinyimagenet.py    --split 0
 python examples/costarr_tinyimagenet.py  --split 0
 python examples/openmax_tinyimagenet.py  --split 0
 python examples/opengan_tinyimagenet.py  --split 0
+python examples/msp_tinyimagenet.py      --split 0
 ```
 
 Every example takes `--split {0..4}`, `--epsilon`, `--batch-size` and
@@ -189,13 +194,22 @@ training images, so a split never sees statistics derived from its unknowns.
 
 ```
 core/           shared loader, backbones, metrics, path and device config
-methods/        cac · costarr · gfror · openmax · opengan
+methods/        cac · costarr · gfror · msp · openmax · opengan
 splits/         the five class splits — the open-set protocol itself
 training/       numbered stages: dataset preparation, then every checkpoint
 examples/       one runnable TinyImageNet example per method
 benchmark/      the five-split epsilon sweeps behind the reported tables
+docs/           adding-a-method.md — how to plug a sixth method in
 third_party/    vendored pytorch_ood (Apache 2.0) — see third_party/NOTICE
 ```
+
+## Adding a method
+
+`docs/adding-a-method.md` walks through adding a method, using MSP as a worked
+example — it was added by following that guide, so its files can be read
+alongside it. Covers the package layout, where checkpoint paths live, why
+scoring is kept separate from thresholding, and how to pick the metric
+`convention`.
 
 ## Notes on the code
 
