@@ -3,7 +3,7 @@ from typing import Dict, List
 
 from torch.utils.data import Dataset
 
-from pytorch_ood.api import Detector
+from osr_pytorch_ood.api import Detector
 
 
 class Benchmark(ABC):

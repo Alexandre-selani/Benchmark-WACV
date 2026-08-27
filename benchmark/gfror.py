@@ -23,7 +23,8 @@ from Utils import (DEVICE, MetricLogger, OSRMetrics, fix_random_seed,
 import methods.gfror  # noqa: F401  — registers the aliases the pickled checkpoints need
 
 from _common import (announce, base_parser, epsilons_from, loader_for,
-                     mc_column_names, output_dir)
+                     mc_column_names, output_dir,
+                     write_best_hyperparameters)
 
 METHOD = "gfror"
 IMAGE_SIZE = 64
@@ -63,7 +64,8 @@ def main():
 
     for subset in args.subsets:
         announce("GFROR", subset, args.splits, epsilons)
-        logger = MetricLogger(epsilons, len(args.splits), str(output_dir(METHOD, args.model, subset)),
+        directory = output_dir(METHOD, args.model, subset)
+        logger = MetricLogger(epsilons, len(args.splits), str(directory),
                               flag_mc=args.confusion_matrices,
                               mc_column_names=mc_column_names(),
                               mc_title=f"GFROR - TinyImageNet ({subset})")
@@ -94,7 +96,9 @@ def main():
             print(f"  split {split} done")
             del generator, classifier, eval_loader, max_act
 
-        logger.aggregate(f"{subset.capitalize()}.csv")
+        frame = logger.aggregate(f"{subset.capitalize()}.csv")
+        if subset == "val":
+            write_best_hyperparameters([({}, frame)], directory)
 
 
 if __name__ == "__main__":

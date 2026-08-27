@@ -152,12 +152,13 @@ wrong.
 ## Step 4 — the sweep
 
 `benchmark/msp.py` produces the table: five splits, an epsilon sweep, and mean
-plus standard deviation per epsilon. Its shape is the same for every method:
+plus standard deviation per epsilon, plus `best_hiperparameters.csv` naming the
+validation-selected operating point. Its shape is the same for every method:
 
 ```python
 for subset in args.subsets:
-    logger = MetricLogger(epsilons, len(args.splits),
-                          str(output_dir(METHOD, args.model, subset)),
+    directory = output_dir(METHOD, args.model, subset)
+    logger = MetricLogger(epsilons, len(args.splits), str(directory),
                           flag_mc=args.confusion_matrices,
                           mc_column_names=mc_column_names(),
                           mc_title=f"MSP - TinyImageNet ({subset})")
@@ -172,7 +173,9 @@ for subset in args.subsets:
             metrics = OSRMetrics(..., convention="opengan").compute()
             logger.update(metrics, fold, epsilon)
 
-    logger.aggregate(f"{subset.capitalize()}.csv")
+    frame = logger.aggregate(f"{subset.capitalize()}.csv")
+    if subset == "val":
+        write_best_hyperparameters([({}, frame)], directory)
 ```
 
 The scoring call sits **outside** the epsilon loop. That is the whole reason
@@ -182,13 +185,19 @@ OpenMax's does on `tailsize` and `alpha` — put that parameter in an outer loop
 and refit there, keeping epsilon innermost and free. `benchmark/openmax.py` is
 the example to copy.
 
-Two details worth matching:
+Three details worth matching:
 
 - `fold` is the position in `args.splits`, not the split number. This keeps
   `--splits 2 3` working, where `MetricLogger` expects folds `0..n-1`.
 - Pass `epsilon_decimals` to `MetricLogger` if your step is finer than 1e-6.
   Rounding exists only to absorb `np.arange` float noise; if it is coarser than
   the step, distinct epsilons collapse into one row and get averaged together.
+- `write_best_hyperparameters` runs under `if subset == "val"` and nowhere
+  else. It takes `(hyperparameters, frame)` pairs, so a method sweeping only
+  epsilon passes one pair with an empty dict, while a grid passes one pair per
+  combination and gets the winner across all of them. Feed it the frame
+  `aggregate` returns rather than re-reading the CSV: the file on disk is
+  rounded to three decimals and would tie.
 
 ## Step 5 — packaging
 
@@ -196,6 +205,11 @@ Nothing to do. `pyproject.toml` declares `include = ["methods*", ...]`, so
 `methods.msp` is picked up automatically, and the editable install resolves new
 submodules without reinstalling. This was verified: the example and the sweep
 below both ran against an install made before `methods/msp/` existed.
+
+The exception is the set of top-level packages in `package-dir`. Those names
+are baked into a finder module at install time, so renaming or moving one —
+`Models`, `Utils`, `Datasets`, `methods`, `osr_pytorch_ood` — needs
+`pip install -e .` again. Adding a subpackage beneath an existing one does not.
 
 ## Step 6 — training, if the method needs it
 

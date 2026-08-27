@@ -21,7 +21,7 @@ import torchvision.transforms as tvt
 from torch import Tensor
 from torch.hub import load_state_dict_from_url
 
-from pytorch_ood.utils import ToRGB
+from osr_pytorch_ood.utils import ToRGB
 
 
 class BasicBlock(nn.Module):

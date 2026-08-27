@@ -4,10 +4,10 @@ from torch.utils.data import DataLoader, Dataset
 from torchvision.datasets import MNIST, SVHN, ImageNet
 from torchvision.transforms import Compose
 
-from pytorch_ood.api import Detector
-from pytorch_ood.benchmark import Benchmark
-from pytorch_ood.dataset.img import ImageNetO, OpenImagesO, Textures
-from pytorch_ood.utils import OODMetrics, ToRGB, ToUnknown
+from osr_pytorch_ood.api import Detector
+from osr_pytorch_ood.benchmark import Benchmark
+from osr_pytorch_ood.dataset.img import ImageNetO, OpenImagesO, Textures
+from osr_pytorch_ood.utils import OODMetrics, ToRGB, ToUnknown
 
 
 class ImageNet_OpenOOD(Benchmark):

@@ -17,8 +17,8 @@ import torch
 from torch import Tensor, tensor
 from torch.utils.data import DataLoader
 
-from pytorch_ood.api import Detector, ModelNotSetException, RequiresFittingException
-from pytorch_ood.utils import extract_features, is_known
+from osr_pytorch_ood.api import Detector, ModelNotSetException, RequiresFittingException
+from osr_pytorch_ood.utils import extract_features, is_known
 
 log = logging.getLogger(__name__)
 Self = TypeVar("Self")

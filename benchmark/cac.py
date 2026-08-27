@@ -22,7 +22,8 @@ from Utils import DEVICE, MetricLogger, OSRMetrics, cac_ckpt, fix_random_seed
 from methods.cac import find_anchor_means, gather_outputs
 
 from _common import (NUM_CLASSES, announce, base_parser, epsilons_from,
-                     loader_for, mc_column_names, output_dir)
+                     loader_for, mc_column_names, output_dir,
+                     write_best_hyperparameters)
 
 METHOD = "cac"
 
@@ -36,7 +37,8 @@ def main():
 
     for subset in args.subsets:
         announce("CAC", subset, args.splits, epsilons)
-        logger = MetricLogger(epsilons, len(args.splits), str(output_dir(METHOD, args.model, subset)),
+        directory = output_dir(METHOD, args.model, subset)
+        logger = MetricLogger(epsilons, len(args.splits), str(directory),
                               flag_mc=args.confusion_matrices,
                               mc_column_names=mc_column_names(),
                               mc_title=f"CAC - TinyImageNet ({subset})")
@@ -68,7 +70,9 @@ def main():
             print(f"  split {split} done")
             del model, train_loader, eval_loader, distances
 
-        logger.aggregate(f"{subset.capitalize()}.csv")
+        frame = logger.aggregate(f"{subset.capitalize()}.csv")
+        if subset == "val":
+            write_best_hyperparameters([({}, frame)], directory)
 
 
 if __name__ == "__main__":

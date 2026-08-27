@@ -3,7 +3,7 @@ import os
 from os.path import join
 from typing import Callable, Optional
 
-from pytorch_ood.dataset.img.base import ImageDatasetBase
+from osr_pytorch_ood.dataset.img.base import ImageDatasetBase
 
 log = logging.getLogger(__name__)
 

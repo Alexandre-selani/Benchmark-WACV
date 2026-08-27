@@ -8,9 +8,9 @@ from torch.utils.data import DataLoader, Dataset
 from torchvision.datasets import CIFAR10, CIFAR100, MNIST, FashionMNIST
 from torchvision.transforms import Compose
 
-from pytorch_ood.api import Detector
-from pytorch_ood.benchmark import Benchmark
-from pytorch_ood.dataset.img import (
+from osr_pytorch_ood.api import Detector
+from osr_pytorch_ood.benchmark import Benchmark
+from osr_pytorch_ood.dataset.img import (
     GaussianNoise,
     LSUNCrop,
     LSUNResize,
@@ -21,7 +21,7 @@ from pytorch_ood.dataset.img import (
     TinyImageNetResize,
     UniformNoise,
 )
-from pytorch_ood.utils import OODMetrics, ToRGB, ToUnknown
+from osr_pytorch_ood.utils import OODMetrics, ToRGB, ToUnknown
 
 
 class CIFAR10_ODIN(Benchmark):

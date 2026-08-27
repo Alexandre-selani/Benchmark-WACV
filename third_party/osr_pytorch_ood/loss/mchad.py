@@ -5,7 +5,7 @@
 import torch
 from torch import nn
 
-from pytorch_ood.model import ClassCenters
+from osr_pytorch_ood.model import ClassCenters
 
 from ..utils import apply_reduction, is_unknown
 from .center import CenterLoss

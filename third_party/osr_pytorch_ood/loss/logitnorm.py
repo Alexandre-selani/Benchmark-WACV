@@ -3,7 +3,7 @@ from torch.nn import Module
 from torch import Tensor
 from torch import functional as F
 from torch.nn.functional import nll_loss
-from pytorch_ood.utils import is_known
+from osr_pytorch_ood.utils import is_known
 
 
 def logit_norm_loss(

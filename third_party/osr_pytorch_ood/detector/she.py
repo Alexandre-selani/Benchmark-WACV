@@ -11,12 +11,12 @@
 from typing import TypeVar, Callable
 
 import torch
-from pytorch_ood.api import RequiresFittingException
+from osr_pytorch_ood.api import RequiresFittingException
 from torch import nn
 from torch import Tensor
 from torch.utils.data import DataLoader
 import logging
-from pytorch_ood.utils import extract_features, is_known, TensorBuffer
+from osr_pytorch_ood.utils import extract_features, is_known, TensorBuffer
 
 from ..api import Detector, ModelNotSetException
 

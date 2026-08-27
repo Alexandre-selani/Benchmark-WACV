@@ -1,5 +1,11 @@
 # INSERT TITLE
 
+Authors: Removed before camera-ready
+
+Abstract:
+
+---
+
 Six open-set recognition methods — **CAC**, **GFROR**, **COSTARR**, **OpenMax**,
 **OpenGan** and **MSP** — evaluated on the same TinyImageNet splits, through the
 same data loader and the same metric implementation. MSP is the softmax-threshold
@@ -28,7 +34,7 @@ top-level packages importable from anywhere:
 | `Models` | `core/Models/` | the ResNet18 backbones each method adapts |
 | `Utils` | `core/Utils/` | paths, device, metrics, metric logger |
 | `methods` | `methods/` | one subpackage per method |
-| `pytorch_ood` | `third_party/pytorch_ood/` | vendored, for OpenMax only |
+| `osr_pytorch_ood` | `third_party/osr_pytorch_ood/` | vendored, for OpenMax only |
 
 Because everything is installed, **no script depends on the working
 directory** — the examples run from anywhere, and there are no `sys.path`
@@ -127,15 +133,35 @@ python benchmark/gfror.py
 python benchmark/opengan.py
 python benchmark/openmax.py
 python benchmark/msp.py
+
+python benchmark/summarize.py          # one comparison table across all six
 ```
 
 Each writes, under `OSR_RESULTS`:
 
 ```
-results/<method>/<model>/{Val,Test}/
-├── {Val,Test}.csv        mean and std of each metric, per epsilon
-└── Folds/Results_Fold_<i>.csv     the per-split values behind them
+results/<method>/<model>/
+├── Val/
+│   ├── Val.csv                     mean and std of each metric, per epsilon
+│   ├── Folds/Results_Fold_<i>.csv  the per-split values behind them
+│   └── best_hiperparameters.csv    the winning configuration and its metrics
+└── Test/
+    ├── Test.csv
+    └── Folds/Results_Fold_<i>.csv
 ```
+
+`best_hiperparameters.csv` is written for the validation subset only. It holds
+a single row: the hyperparameter combination with the highest mean macro F1
+across the splits, followed by every metric at that point. Selection compares
+at full precision, since the CSVs are rounded to three decimals and a fine
+sweep ties hundreds of rows there. There is deliberately no test-side
+equivalent — choosing the operating point on test reports an upper bound
+rather than a result.
+
+`summarize.py` picks each method's operating point on the **validation** sweep
+and reports what it scores on **test**, which is the protocol the tables should
+use. `--select test` reads the best point straight off the test sweep instead;
+that number is an upper bound, not a result.
 
 Flags: `--splits`, `--subsets val test`, `--epsilon-start/-stop/-step`,
 `--batch-size`, `--num-workers`, `--confusion-matrices`. OpenMax additionally
@@ -147,7 +173,8 @@ sweep — 1000 thresholds over five splits — takes well under a minute on one
 GPU. OpenMax is the exception: tailsize and alpha change the Weibull fit, so it
 refits at every grid point, and the default 5x5 grid over five splits is 125
 fits. It also writes `grid_summary.csv`, ranking the grid points by their best
-macro F1.
+macro F1; its `best_hiperparameters.csv` accordingly names a tailsize, an alpha
+and an epsilon rather than an epsilon alone.
 
 Default sweeps, matching the original experiments:
 
@@ -200,8 +227,38 @@ training/       numbered stages: dataset preparation, then every checkpoint
 examples/       one runnable TinyImageNet example per method
 benchmark/      the five-split epsilon sweeps behind the reported tables
 docs/           adding-a-method.md — how to plug a sixth method in
-third_party/    vendored pytorch_ood (Apache 2.0) — see third_party/NOTICE
+third_party/    vendored pytorch-ood (Apache 2.0) — see third_party/NOTICE
 ```
+
+## Implementation sources
+
+Official implementations were used wherever they existed. Where none did, the
+code comes from a peer-reviewed framework; where neither did, from an unofficial
+implementation validated against the numbers reported in the original paper.
+
+| Method | Source | Provenance |
+|---|---|---|
+| CAC | [dimitymiller/cac-openset](https://github.com/dimitymiller/cac-openset) | official |
+| OpenGan | [aimerykong/OpenGAN](https://github.com/aimerykong/OpenGAN) | official |
+| OpenMax | [kkirchheim/pytorch-ood](https://github.com/kkirchheim/pytorch-ood) | peer-reviewed framework, adapted |
+| COSTARR | [Vastlab/COSTARR](https://github.com/Vastlab/COSTARR) | reimplemented, later validated against the official release |
+| GFROR | [misraya/unsupervised_open_set](https://github.com/misraya/unsupervised_open_set) | unofficial, validated against the paper |
+| MSP | — | no external source; 40 lines over the stage 1 backbone |
+
+Three of them needed more than a copy:
+
+- **OpenMax.** pytorch-ood targets out-of-distribution detection, where only the
+  known/unknown decision matters, so its detector returned a novelty score alone
+  and discarded the class prediction. It was modified to return the full score
+  vector, leaving the core logic untouched. It is also vendored and renamed —
+  see the note at the end of this file for why.
+- **COSTARR.** The official repository was unavailable when these experiments
+  began, so the scoring function was reimplemented from the paper. Once the
+  official code was released, the two were compared on synthetic data and on
+  MNIST/Omniglot and agreed exactly.
+- **GFROR.** No official release exists. The unofficial implementation was
+  validated by reproducing the paper's CIFAR-10 benchmark: it reports
+  AUROC 80.9 ± 3, and this copy measured 78.4 ± 3.
 
 ## Adding a method
 
@@ -225,6 +282,8 @@ A few decisions are worth knowing before reading:
   the pre-refactor `model.*` names on import so the released checkpoints load
   unchanged. Stages 3 and 4 keep saving them this way, so freshly trained
   weights stay interchangeable with the released ones.
-- **`pytorch_ood` is vendored rather than installed from PyPI**, because the
-  OpenMax detector used here takes an extra `epsilon` argument that upstream
-  does not have. See `third_party/NOTICE`.
+- **pytorch-ood is vendored rather than installed from PyPI, and imported as
+  `osr_pytorch_ood`**. Vendored because the OpenMax detector used here takes an
+  extra `epsilon` argument upstream does not have; renamed because a vendored
+  copy under the upstream name is still shadowed by any `pytorch_ood` on
+  sys.path, silently. See `third_party/NOTICE`.

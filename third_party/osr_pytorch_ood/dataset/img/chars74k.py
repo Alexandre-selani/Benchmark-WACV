@@ -9,7 +9,7 @@ import numpy as np
 from PIL import Image
 from torchvision.datasets.utils import check_integrity, download_url
 
-from pytorch_ood.dataset.img.base import ImageDatasetBase
+from osr_pytorch_ood.dataset.img.base import ImageDatasetBase
 
 log = logging.getLogger(__name__)
 

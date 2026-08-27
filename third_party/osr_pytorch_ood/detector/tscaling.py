@@ -20,8 +20,8 @@ from torch.nn.functional import log_softmax, nll_loss
 from torch.optim import LBFGS
 from torch.utils.data import DataLoader
 
-from pytorch_ood.detector.softmax import MaxSoftmax
-from pytorch_ood.utils import extract_features, is_known
+from osr_pytorch_ood.detector.softmax import MaxSoftmax
+from osr_pytorch_ood.utils import extract_features, is_known
 
 from ..api import RequiresFittingException
 

@@ -1,10 +1,10 @@
-third_party/pytorch_ood
-=======================
+third_party/osr_pytorch_ood
+===========================
 
-Vendored copy of pytorch-ood 0.2.2
+Vendored copy of pytorch-ood 0.2.2, imported as `osr_pytorch_ood`
     https://github.com/kkirchheim/pytorch-ood
     Copyright Konstantin Kirchheim
-    Licensed under the Apache License, Version 2.0 (see pytorch_ood/LICENSE).
+    Licensed under the Apache License, Version 2.0 (see osr_pytorch_ood/LICENSE).
 
 Why it is vendored rather than installed from PyPI
 --------------------------------------------------
@@ -14,16 +14,22 @@ constructor takes an extra `epsilon` argument
 `detector.epsilon` to threshold known/unknown decisions. Installing stock
 pytorch-ood from PyPI would not provide it.
 
-Vendoring also resolves an ambiguity that existed while the experiments were
-run: two copies of `pytorch_ood` were importable from the same environment,
-and which one won depended on sys.path order. Their `detector/openmax/`
-directories were verified byte-identical, so the reported OpenMax results are
-unaffected. This tree makes the resolution unambiguous.
+Why it is renamed
+-----------------
+The package is imported as `osr_pytorch_ood`, not `pytorch_ood`. Vendoring
+under the upstream name is not enough to guarantee this code is the code that
+runs: any `pytorch_ood` reachable from sys.path — a PyPI install, or a
+directory added by a stray .pth file — shadows a vendored copy, silently.
+That happened on the machine these experiments were run on, which is why the
+original scripts carried a sys.path filter. A distinct name removes the
+possibility entirely.
 
 Known local change
 ------------------
 - detector/openmax/torch.py: the `epsilon` constructor argument and the
   `self.epsilon` attribute are not part of the upstream OpenMax API.
+- Absolute self-imports were rewritten from `pytorch_ood.*` to
+  `osr_pytorch_ood.*` to match the renamed package.
 
 This directory is the copy the reported results were produced with, and is
 what the benchmark imports. A full file-by-file diff against the upstream

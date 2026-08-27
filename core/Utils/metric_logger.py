@@ -103,6 +103,10 @@ class MetricLogger:
 
             Args:
                 csv_name: filename of the consolidated CSV.
+
+            Returns:
+                The consolidated frame at full precision -- one row per
+                epsilon, with the mean and standard deviation of every metric.
         """
         final_data = []
         os.makedirs(self.dir, exist_ok=True)
@@ -136,6 +140,9 @@ class MetricLogger:
         # The metric columns are written at 3 decimals, but epsilon keeps its
         # full precision: rounding it here would merge rows of a fine sweep.
         metric_cols = [c for c in df.columns if c != "epsilon"]
-        df[metric_cols] = df[metric_cols].round(3)
-        df.to_csv(csv_path, index=False)
+        df.round({c: 3 for c in metric_cols}).to_csv(csv_path, index=False)
         print(f"wrote {csv_path}")
+
+        # Returned unrounded: three decimals tie hundreds of rows of a fine
+        # sweep, so a caller picking a best row needs the full precision.
+        return df

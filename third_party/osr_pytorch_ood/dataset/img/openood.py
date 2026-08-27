@@ -12,7 +12,7 @@ from PIL import Image
 
 from torchvision.datasets.utils import extract_archive
 
-from pytorch_ood.dataset.img.base import ImageDatasetBase, _get_resource_file
+from osr_pytorch_ood.dataset.img.base import ImageDatasetBase, _get_resource_file
 
 log = logging.getLogger(__name__)
 

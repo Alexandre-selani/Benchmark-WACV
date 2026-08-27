@@ -13,7 +13,9 @@
     Writes one CSV per grid point under
         results/openmax/<model>/{Val,Test}/tail_<t>_alpha_<a>/
     plus grid_summary.csv, which names the best epsilon of each grid point by
-    mean macro F1 so the grid can be read at a glance.
+    mean macro F1 so the grid can be read at a glance, and -- for the
+    validation subset -- best_hiperparameters.csv, the single winning
+    tailsize/alpha/epsilon combination with its metrics.
 
     Run:
         python benchmark/openmax.py
@@ -22,10 +24,9 @@
 
 import gc
 
-import numpy as np
 import pandas as pd
 import torch
-from pytorch_ood.detector import OpenMax
+from osr_pytorch_ood.detector import OpenMax
 from tqdm import tqdm
 
 from Datasets import TinyImageNet_loader
@@ -33,8 +34,9 @@ from Models import ResNet18_tinyimgnet
 from Utils import (DEVICE, MetricLogger, OSRMetrics, classifier_ckpt,
                    fix_random_seed)
 
-from _common import (NUM_CLASSES, announce, base_parser, epsilons_from,
-                     loader_for, mc_column_names, output_dir)
+from _common import (NUM_CLASSES, SELECTION_METRIC, announce, base_parser,
+                     epsilons_from, loader_for, mc_column_names, output_dir,
+                     write_best_hyperparameters)
 
 METHOD = "openmax"
 
@@ -50,8 +52,27 @@ def score(detector, dataloader):
     return torch.cat(scores), torch.cat(targets)
 
 
+def write_grid_summary(grid, directory):
+    """One row per grid point, naming its best epsilon by mean macro F1."""
+    rows = []
+    for hyperparameters, frame in grid:
+        best = frame.loc[frame[SELECTION_METRIC].idxmax()]
+        rows.append({**hyperparameters,
+                     "epsilon": best["epsilon"],
+                     SELECTION_METRIC: best[SELECTION_METRIC],
+                     "F1 macro_std": best["F1 macro_std"],
+                     "accuracy_mean": best["accuracy_mean"],
+                     "auroc_mean": best["auroc_mean"]})
+
+    summary = pd.DataFrame(rows).sort_values(SELECTION_METRIC, ascending=False)
+    metric_columns = [c for c in summary.columns if c.endswith(("_mean", "_std"))]
+    path = directory / "grid_summary.csv"
+    summary.round({c: 3 for c in metric_columns}).to_csv(path, index=False)
+    print(f"wrote {path}")
+
+
 def main():
-    parser = base_parser(__doc__, default_start=0.0, default_stop=1.0, default_step=0.2)
+    parser = base_parser(__doc__, default_start=0.0, default_stop=1.0, default_step=0.1)
     parser.add_argument("--tailsizes", type=int, nargs="+", default=[0, 50, 100, 150, 200],
                         metavar="N", help="Weibull tail sizes to try (default: 0 50 100 150 200)")
     parser.add_argument("--alphas", type=int, nargs="+", default=[1, 5, 10, 15, 20],
@@ -69,7 +90,7 @@ def main():
               f"{len(args.tailsizes) * len(args.alphas) * len(args.splits)} fits")
 
         subset_root = output_dir(METHOD, args.model, subset)
-        summary_rows = []
+        grid = []
 
         for tail in args.tailsizes:
             for alpha in args.alphas:
@@ -116,23 +137,16 @@ def main():
 
                     del model, detector, fit_loader, eval_loader, activations
 
-                logger.aggregate(f"{subset.capitalize()}.csv")
+                frame = logger.aggregate(f"{subset.capitalize()}.csv")
+                grid.append(({"tailsize": tail, "alpha": alpha}, frame))
 
-                # Best epsilon of this grid point, for the summary.
-                df = pd.read_csv(point_dir / f"{subset.capitalize()}.csv")
-                best = df.loc[df["F1 macro_mean"].idxmax()]
-                summary_rows.append({
-                    "tailsize": tail, "alpha": alpha, "epsilon": best["epsilon"],
-                    "F1 macro_mean": best["F1 macro_mean"], "F1 macro_std": best["F1 macro_std"],
-                    "accuracy_mean": best["accuracy_mean"], "auroc_mean": best["auroc_mean"],
-                })
-                print(f"  tail {tail:>3} alpha {alpha:>2} -> best F1 "
-                      f"{best['F1 macro_mean']:.3f} at epsilon {best['epsilon']}")
+                best = frame.loc[frame[SELECTION_METRIC].idxmax()]
+                print(f"  tail {tail} alpha {alpha} -> best F1 "
+                      f"{best[SELECTION_METRIC]:.3f} at epsilon {best['epsilon']}")
 
-        summary = pd.DataFrame(summary_rows).sort_values("F1 macro_mean", ascending=False)
-        summary_path = subset_root / "grid_summary.csv"
-        summary.to_csv(summary_path, index=False)
-        print(f"wrote {summary_path}")
+        write_grid_summary(grid, subset_root)
+        if subset == "val":
+            write_best_hyperparameters(grid, subset_root)
 
 
 if __name__ == "__main__":

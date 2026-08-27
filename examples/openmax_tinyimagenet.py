@@ -19,7 +19,7 @@
 
 import numpy as np
 import torch
-from pytorch_ood.detector import OpenMax
+from osr_pytorch_ood.detector import OpenMax
 
 from Datasets import TinyImageNet_loader
 from Models import ResNet18_tinyimgnet

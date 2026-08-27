@@ -13,11 +13,15 @@
 import argparse
 
 import numpy as np
+import pandas as pd
 
 from Utils import NAMES, RESULTS_ROOT
 
 NUM_CLASSES = 20
 N_SPLITS = 5
+
+BEST_FILENAME = "best_hiperparameters.csv"
+SELECTION_METRIC = "F1 macro_mean"
 
 
 def base_parser(description, default_start, default_stop, default_step):
@@ -75,3 +79,45 @@ def loader_for(data, subset, split, transform):
 def announce(method, subset, splits, epsilons):
     print(f"\n{method} · {subset} · splits {list(splits)} · "
           f"{len(epsilons)} epsilons from {epsilons[0]} to {epsilons[-1]}")
+
+
+def write_best_hyperparameters(sweeps, directory):
+    """
+        Names the single best hyperparameter combination and writes it out.
+
+        `sweeps` is a list of (hyperparameters, frame) pairs -- one entry per
+        combination of the hyperparameters that are not epsilon, holding the
+        full-precision frame aggregate() returned for it. A method whose only
+        hyperparameter is epsilon passes one entry with an empty dict.
+
+        Selection is by mean macro F1 across the splits, compared at full
+        precision because the CSVs on disk are rounded to three decimals and
+        would tie. An exact tie resolves to the first row, meaning the lowest
+        epsilon of the earliest combination.
+
+        Call this for the validation subset only: picking the operating point
+        on test would report an optimistic upper bound rather than a choice
+        that has to generalize.
+    """
+    frames = []
+    for hyperparameters, frame in sweeps:
+        tagged = frame.copy()
+        for column, value in reversed(list(hyperparameters.items())):
+            tagged.insert(0, column, value)
+        frames.append(tagged)
+
+    pooled = pd.concat(frames, ignore_index=True)
+    best = pooled.loc[[pooled[SELECTION_METRIC].idxmax()]].copy()
+    best["selected_by"] = SELECTION_METRIC
+
+    metric_columns = [c for c in best.columns
+                      if c.endswith(("_mean", "_std")) and c != "selected_by"]
+    path = directory / BEST_FILENAME
+    best.round({c: 3 for c in metric_columns}).to_csv(path, index=False)
+
+    row = best.iloc[0]
+    chosen = ", ".join(f"{c}={row[c]}" for c in
+                       [*(sweeps[0][0].keys()), "epsilon"])
+    print(f"best by {SELECTION_METRIC}: {chosen} -> "
+          f"{row[SELECTION_METRIC]:.3f}  ({path})")
+    return best

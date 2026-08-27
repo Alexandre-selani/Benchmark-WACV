@@ -27,7 +27,8 @@ from methods.opengan.classifier import Discriminator
 from methods.opengan.Feat_extraction import ResNet18_64x64_feature_extraction
 
 from _common import (NUM_CLASSES, announce, base_parser, epsilons_from,
-                     loader_for, mc_column_names, output_dir)
+                     loader_for, mc_column_names, output_dir,
+                     write_best_hyperparameters)
 
 METHOD = "opengan"
 FEATURE_CHANNELS = 512    # ResNet18 penultimate width — the discriminator's input
@@ -61,7 +62,8 @@ def main():
 
     for subset in args.subsets:
         announce("OpenGan", subset, args.splits, epsilons)
-        logger = MetricLogger(epsilons, len(args.splits), str(output_dir(METHOD, args.model, subset)),
+        directory = output_dir(METHOD, args.model, subset)
+        logger = MetricLogger(epsilons, len(args.splits), str(directory),
                               flag_mc=args.confusion_matrices,
                               mc_column_names=mc_column_names(),
                               mc_title=f"OpenGan - TinyImageNet ({subset})")
@@ -96,7 +98,9 @@ def main():
             print(f"  split {split} done")
             del classifier, discriminator, eval_loader, likelihood
 
-        logger.aggregate(f"{subset.capitalize()}.csv")
+        frame = logger.aggregate(f"{subset.capitalize()}.csv")
+        if subset == "val":
+            write_best_hyperparameters([({}, frame)], directory)
 
 
 if __name__ == "__main__":

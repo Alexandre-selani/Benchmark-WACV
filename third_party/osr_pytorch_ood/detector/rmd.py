@@ -19,7 +19,7 @@ from torch import Tensor
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
 
-from pytorch_ood.detector.mahalanobis import Mahalanobis
+from osr_pytorch_ood.detector.mahalanobis import Mahalanobis
 
 from ..api import Detector, ModelNotSetException, RequiresFittingException
 from ..utils import (

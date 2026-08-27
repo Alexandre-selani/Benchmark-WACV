@@ -32,8 +32,8 @@ dependencies = [
 # core/ holds the shared loader, backbones and metrics; methods/ holds one
 # package per open-set method. Both are installed from this single project, so
 # `pip install -e .` is the only install step the benchmark needs.
-package-dir = { Datasets = "core/Datasets", Models = "core/Models", Utils = "core/Utils", methods = "methods", pytorch_ood = "third_party/pytorch_ood" }
+package-dir = { Datasets = "core/Datasets", Models = "core/Models", Utils = "core/Utils", methods = "methods", osr_pytorch_ood = "third_party/osr_pytorch_ood" }
 
 [tool.setuptools.packages.find]
 where = ["core", ".", "third_party"]
-include = ["Datasets*", "Models*", "Utils*", "methods*", "pytorch_ood*"]
+include = ["Datasets*", "Models*", "Utils*", "methods*", "osr_pytorch_ood*"]

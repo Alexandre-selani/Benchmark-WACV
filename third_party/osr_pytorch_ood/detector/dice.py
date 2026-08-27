@@ -19,7 +19,7 @@ from sklearn.exceptions import NotFittedError
 from torch import Tensor
 from torch.utils.data import DataLoader
 
-from pytorch_ood.utils import extract_features, is_known
+from osr_pytorch_ood.utils import extract_features, is_known
 
 from ..api import Detector, RequiresFittingException, ModelNotSetException
 from .energy import EnergyBased
